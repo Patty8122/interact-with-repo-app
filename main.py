@@ -17,6 +17,13 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import concurrent.futures
 import uuid
 
+def split_documents(documents):
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=100
+    )
+    return splitter.split_documents(documents)
+
 def add_documents_to_pinecone(vector_store, documents, namespace, batch_size=50, max_workers=10):
     print(f"Total documents to upload: {len(documents)}")
 
@@ -40,14 +47,6 @@ def add_documents_to_pinecone(vector_store, documents, namespace, batch_size=50,
         concurrent.futures.wait(futures)
 
     print(f"✅ All document batches uploaded to namespace: {namespace}")
-
-# pip install -q langchain gitpython sentence-transformers
-def split_documents(documents):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=100
-    )
-    return splitter.split_documents(documents)
 
 def clone_repository(repo_url):
     """Clones a GitHub repository to a temporary directory.
@@ -242,16 +241,32 @@ def main():
             st.success("Documents added to Pinecone index successfully!")
         else:
             st.error("Please enter a valid GitHub repository URL.")
-
-    query = st.text_input("Enter your query:")
-    if st.button("Search"):
-        if query:
-            client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=st.secrets["GROQ_API"])
-            response = apply_rag(query, vector_store, client, namespace)
-            st.write(response)
-        else:
-            st.error("Please enter a query to search.")
-            
+    
+    # Initialize messages in session state
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    
+    # Display existing messages from session state
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+    
+    client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=st.secrets["GROQ_API"])
+    
+    # Handle new messages
+    if prompt := st.chat_input("Ask me anything about the codebase"):
+        # Add user message to session state
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Get response
+        response = apply_rag(prompt, vector_store, client, namespace)
+        
+        # Add assistant response to session state
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        # Rerun to display new messages
+        st.rerun()
+        
     if st.button("Delete Namespace"):
         delete_namespace(index, namespace)
         # Generate new namespace after deletion
