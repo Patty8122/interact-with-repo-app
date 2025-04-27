@@ -110,7 +110,7 @@ def add_documents_to_pinecone(vector_store, documents, namespace, batch_size=50,
     print(f"✅ All document batches uploaded to namespace: {namespace}")
     return time.time() - start_time  # Return the total time taken to upload all documents
 
-def clone_repository(repo_url):
+def clone_repository(repo_url, namespace):
     """Clones a GitHub repository to a temporary directory.
 
     Args:
@@ -119,7 +119,7 @@ def clone_repository(repo_url):
     Returns:
         The path to the cloned repository.
     """
-    repo_name = repo_url.split("/")[-1]  # Extract repository name from URL
+    repo_name = namespace
     if os.path.exists(os.path.join(tempfile.gettempdir(), repo_name)):
         if os.path.exists(os.path.join(tempfile.gettempdir(), repo_name, "_metrics.json")):
             print(f"Repository {repo_name} already exists in temporary directory.")
@@ -310,7 +310,7 @@ def main():
 
     if st.button("Clone and Index Repository"):
         if repo_url:
-            st.session_state.repo_path = clone_repository(repo_url)  # Store in session state
+            st.session_state.repo_path = clone_repository(repo_url, namespace)  # Store in session state
             documents = get_all_file_contents(st.session_state.repo_path)
             documents = split_documents(documents)
             st.session_state.metrics["total_tokens"] = sum(len(doc.page_content.split()) for doc in documents)
