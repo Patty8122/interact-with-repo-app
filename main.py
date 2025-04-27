@@ -4,9 +4,7 @@ import uuid
 import time
 import json
 import streamlit as st
-# from tqdm.contrib.concurrent import thread_map 
 from stqdm import stqdm
-
 import concurrent.futures
 from pathlib import Path
 from git import Repo
@@ -24,14 +22,7 @@ SUPPORTED_EXTENSIONS = {'.py', '.js', '.tsx', '.jsx', '.ipynb', '.java',
 IGNORED_DIRS = {'node_modules', 'venv', 'env', 'dist', 'build', '.git',
                 '__pycache__', '.next', '.vscode', 'vendor'}
 
-
-# file based metrics
-# 1. Total number of tokens in the repository
-# 2. Time taken to index the repository: Indexing Time per 1000 tokens
-# 3. Time taken per query: Query Latency
-# 4. Number of queries made
-# 5. Average query latency
-# 6. Total query latency
+# Overall metrics file
 overall_metrics_file = "overall_metrics.json"
 if not os.path.exists(overall_metrics_file):
     with open(overall_metrics_file, 'w') as f:
@@ -408,8 +399,6 @@ def main():
             print(f"Temporary directory {st.session_state.repo_path} cleaned up.")
             st.session_state.repo_path = None  # Reset the repo_path
     
-        
-
 
 if __name__ == "__main__":
     main()
